@@ -23,8 +23,10 @@ Close.addEventListener('click', () => {
 Form.addEventListener('submit', (e) => {
     e.preventDefault();
     let products = JSON.parse(localStorage.getItem("Product")) || [];
+    let id = Math.floor(Math.random() * 90000) + 10000;
 
     let newproduct = {
+        id: id,
         Name: Name.value,
         Img: IMG.value,
         Details: Details.value,
@@ -67,17 +69,31 @@ DisplayProduct();
 
 // Add to Cart 
 
-function AddtoCart(index){
+function AddtoCart(index) {
     let products = JSON.parse(localStorage.getItem("Product"));
-    let cartproducts = JSON.parse(localStorage.getItem("Cart")) || []
-    
-    cartproducts.push(products[index]);
-    localStorage.setItem("Cart", JSON.stringify(cartproducts));
+    let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
+
+    let indexvalue = products[index];
+
+    let checkcart = Cart.some((item) => {
+        if (item.id === indexvalue.id) {
+            item.quantity += 1;
+            return true;
+        }
+        return false;
+    });
+
+    if (!checkcart) {
+        indexvalue.quantity = 1;
+        Cart.push(indexvalue);
+    }
+    // Cart.push(products[index]);
+    localStorage.setItem("Cart", JSON.stringify(Cart));
 }
 
 // Delete Product 
 
-function DeleteProduct(index){
+function DeleteProduct(index) {
     let products = JSON.parse(localStorage.getItem("Product"));
     products.splice(index, 1);
     localStorage.setItem("Product", JSON.stringify(products));
@@ -93,37 +109,85 @@ Cart.addEventListener('click', () => {
     AddProduct.style.display = "none"
     Cartpr.style.display = "block"
 
-    function CartProduct() {
-        let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
-        let m = '<h2 class="mb-4">🛒 Your Cart</h2>';
-    
-        Cart.forEach((Cart) => {
-            let n =`
+    CartProduct();
+})
+
+
+function CartProduct() {
+    let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
+    let m = '<h2 class="mb-4">🛒 Your Cart</h2>';
+
+    Cart.forEach((Cart) => {
+        let n = `
             <div class="row product-card align-items-center">
                 <div class="col-md-2 text-center">
                     <img src="${Cart.Img}" alt="Product Image" class="img-fluid product-img cartprimg">
                 </div>
                 <div class="col-md-3">
                     <h5 class="mb-1">${Cart.Name}</h5>
-                    <p class="mb-0">Price: ${Cart.Price}₹</p>
                 </div>
                 <div class="col-md-4 d-flex align-items-center">
                     <div class="quantity-controls d-flex align-items-center">
-                        <button class="btn btn-outline-danger btn-sm me-2">−</button>
-                        <span class="quantity-value">1</span>
-                        <button class="btn btn-outline-success btn-sm ms-2">+</button>
+                        <button class="btn btn-outline-danger btn-sm me-2" onclick="minus(${Cart.id})">−</button>
+                        <span class="quantity-value">${Cart.quantity}</span>
+                        <button class="btn btn-outline-success btn-sm ms-2" onclick="plus(${Cart.id})">+</button>
                     </div>
-                    <button class="btn btn-danger w-100 mt-auto">Delete</button>
+                    <button class="btn btn-danger w-100 mt-auto" onclick="Delfromcart(${Cart.id})">Delete</button>
                 </div>
-                <div class="col-md-3 text-end total-price">₹</div>
+                <div class="col-md-3 text-end total-price">Price: ${Cart.Price * Cart.quantity}₹</div>
             </div>
             `
-            m += n;
-        })
-        Cartpr.innerHTML = m;
-    }
-    CartProduct();
-})
+        m += n;
+    })
+    let total = 0;
+    Cart.forEach(item => {
+        total += parseFloat(item.Price) * item.quantity;
+    });
+
+    m += `<div id="cart-total">Total: <span class="inr">₹${total.toFixed(2)}</span></div>`;
+
+    Cartpr.innerHTML = m;
+}
+CartProduct();
 
 // Delete Product From Cart
 
+function Delfromcart(id) {
+    let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
+
+    Cart.forEach((item, index) => {
+        if (item.id === id) {
+            Cart.splice(index, 1);
+        }
+    });
+    localStorage.setItem("Cart", JSON.stringify(Cart));
+    CartProduct();
+}
+
+// Minus
+
+function minus(id) {
+    let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
+
+    Cart.forEach(item => {
+        if (item.id === id && item.quantity > 1) {
+            item.quantity--;
+        }
+    })
+    localStorage.setItem("Cart", JSON.stringify(Cart));
+    CartProduct();
+}
+
+// Plus
+
+function plus(id) {
+    let Cart = JSON.parse(localStorage.getItem("Cart")) || [];
+
+    Cart.forEach(item => {
+        if (item.id === id) {
+            item.quantity++;
+        }
+    })
+    localStorage.setItem("Cart", JSON.stringify(Cart));
+    CartProduct();
+}
